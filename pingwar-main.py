@@ -3,10 +3,8 @@ import random
 import math
 import argparse
 import os
-import configparser
 
 # Constants
-CONFIG_FILE = "corewar.cfg"
 WIDTH, HEIGHT = 800, 800
 SQUARE_SIZE = 25
 DAY_COLOR = (51, 255, 255)
@@ -102,33 +100,37 @@ def check_boundary_collision(x, y, dx, dy):
     return dx, dy
 
 
+def make_gif(frames_dir, delete_frames=True):
+    from moviepy.editor import ImageSequenceClip
+    from natsort import natsorted
+    import glob
+    frame_files = natsorted(glob.glob(os.path.join(frames_dir, "*.png")))
+
+    clip = ImageSequenceClip(frame_files, fps=60)
+    pics_dir = "./pics"
+    os.makedirs(pics_dir, exist_ok=True)
+    clip.write_gif(os.path.join(pics_dir, "2_players.gif"))
+    # delete frames
+    if delete_frames:
+        # remove frames folder
+        import shutil
+        shutil.rmtree(frames_dir)
+
 
 def main(args):
+    frame_num = 0
+    frame_dir = "frames"
     if args.seed:
         random.seed(args.seed)
-    if args.data_dir:
-        for filename in os.listdir(args.data_dir):
-            if os.path.isfile(os.path.join(args.data_dir, filename)):
-                if filename == CONFIG_FILE:
-                    # Créer un objet ConfigParser
-                    config = configparser.ConfigParser()
-                    config.read(os.path.join(args.data_dir, filename))
-                    memory_size = config['Parametres']['MEMORY']
-                    print(f"Taille de la mémoire : {memory_size}")
-                else:
-                    with open(os.path.join(args.data_dir, filename), 'r') as file:
-                        print(f"Contenu du fichier {filename}:")
-                        content = file.read()
-                        print(content)
-                print("------------------------------")
-
+    if args.record_frames:
+        os.makedirs(frame_dir, exist_ok=True)
     pygame.init()
     pygame.font.init()  # Initialize the font module
 
     font = pygame.font.SysFont('Consolas', 18)  # Or any other preferred font
     # Set up the display
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Core War")
+    pygame.display.set_caption("Pong Wars")
 
     clock = pygame.time.Clock()
     squares = create_squares()
@@ -162,16 +164,22 @@ def main(args):
         # Display scores
         scores = calculate_scores(squares)
         draw_score_panel(screen, scores, font)
+        if args.record_frames:
+            if frame_num % 3 == 0:
+                pygame.image.save(screen, os.path.join(frame_dir, f"frame_{frame_num}.png"))
+            frame_num += 1
 
         pygame.display.flip()
         clock.tick(60)
 
     pygame.quit()
+    if args.record_frames:
+        make_gif(frame_dir)
 
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser()
-    args.add_argument("--data_dir", help="Directory of warrior and config files", default=".")
-    args.add_argument("--seed", type=int, help="Seed for random initial position of warriors", default=0)
+    args.add_argument("--record_frames", action="store_true", help="Record frames for making a movie", default=False)
+    args.add_argument("--seed", type=int, help="Seed for random number generator", default=0)
     args = args.parse_args()
     main(args)
