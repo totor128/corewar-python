@@ -4,6 +4,7 @@ import math
 import argparse
 import os
 import configparser
+import array as arr
 
 # Constants
 CONFIG_FILE = "corewar.cfg"
@@ -16,6 +17,39 @@ NIGHT_BALL_COLOR = (255, 0, 255)
 DX = 14
 DY = 14
 
+class mem_struct:
+    def __init__(self, A_value, B_value, opcode, A_mode, B_mode, debuginfo):
+        self.A_value = A_value
+        self.B_value = B_value
+        self.opcode = opcode
+        self.A_mode = A_mode
+        self.B_mode = B_mode
+        self.debuginfo = debuginfo
+
+    def afficher_cell(self):
+        print(f"A_value: {self.A_value}, B_value: {self.B_value}, opcode: {self.opcode}, A_mode: {self.A_mode}, B_mode: {self.B_mode}, debug: {self.debuginfo}")
+
+class warrior_struct:
+    def __init__(self, name, version, date, filename, authorname):
+        self.pSpaceIDNumber = 0
+        self.taskHead = 0
+        self.taskTail = 0
+        self.tasks = 0
+        self.lastResult = 0
+        self.pSpaceIndex = 0
+        # load position in core
+        self.position = 0
+        # Length of instBank
+        self.instLen = 0
+        # Offset value specified by 'ORG' or 'END'
+        self.offset = 0
+        self.score = arr.array['i']
+        self.name = name
+        self.version = version
+        self.date = date
+        self.filename = filename
+        self.authorname = authorname
+        self.instBank = mem_struct(0, 0, 0, 0, 0, 0, "init")
 
 def calculate_scores(squares):
     scores = {DAY_COLOR: 0, NIGHT_COLOR: 0}
@@ -114,7 +148,9 @@ def main(args):
                     config = configparser.ConfigParser()
                     config.read(os.path.join(args.data_dir, filename))
                     memory_size = config['Parametres']['MEMORY']
-                    print(f"Taille de la mémoire : {memory_size}")
+                    max_warrior = config['Parametres']['MAXWARRIOR']
+                    print(f"Memory size : {memory_size}")
+                    print(f"Max number of warrior : {max_warrior}")
                 else:
                     with open(os.path.join(args.data_dir, filename), 'r') as file:
                         print(f"Contenu du fichier {filename}:")
